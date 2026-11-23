@@ -150,7 +150,7 @@ function render(){$('#nav').innerHTML=NAV.map(([k,i,l])=>`<a class="${k==R?'on':
 $('#main').innerHTML=(V[R]||(()=>view(R)))();if(M[R])tb(R)}
 function go(r){R=r;render();scrollTo(0,0)}
 load();render();
-if("serviceWorker" in navigator&&/^https?:$/.test(location.protocol))navigator.serviceWorker.register("sw.js").catch(()=>{});
+if("serviceWorker" in navigator&&/^https?:$/.test(location.protocol)&&!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform()))navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
 </body>
 </html>
