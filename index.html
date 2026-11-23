@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="mg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1E3A5F">
+<meta name="mobile-web-app-capable" content="yes">
+<title>FKMA Ankazomasina — Sekretariat Jeneraly</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{--m:#1E3A5F;--s:#3B6998;--bg:#F4F7FA;--ac:#E8EEF5;--b:#d3dce8}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:#1c2733;font:15px/1.4 system-ui,"Segoe UI",Roboto,sans-serif}
+header{background:var(--m);color:#fff;padding:calc(10px + env(safe-area-inset-top)) 14px 10px;position:sticky;top:0;z-index:5}
+header b{font-size:17px}header small{display:block;opacity:.75}
+nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--b);display:flex;overflow-x:auto;z-index:6;padding-bottom:env(safe-area-inset-bottom)}
+nav a{flex:0 0 auto;min-width:70px;padding:6px 4px;text-align:center;font-size:11px;color:var(--s);cursor:pointer}
+nav a span{display:block;font-size:20px}
+nav a.on{color:var(--m);font-weight:700;background:var(--ac)}
+main{padding:12px 12px 95px;max-width:1100px;margin:auto}
+h2{color:var(--m);margin:6px 0 10px;font-size:20px}h3{color:var(--m);margin:0 0 8px;font-size:16px}
+.card{background:#fff;border:1px solid var(--b);border-radius:10px;padding:12px;margin-bottom:12px}
+.k{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
+.k div{background:#fff;border:1px solid var(--b);border-left:4px solid var(--s);border-radius:8px;padding:10px}
+.k b{display:block;font-size:18px;color:var(--m)}.k small{color:#5b6b7d}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;align-items:end}
+label{font-size:12px;color:#4a5b6e;display:grid;gap:3px}
+input,select{font:inherit;padding:8px;border:1px solid var(--b);border-radius:8px;background:#fff;width:100%}
+.btn{background:var(--m);color:#fff;border:0;border-radius:8px;padding:9px 14px;font:inherit;cursor:pointer;text-align:center}
+.btn.l{background:var(--ac);color:var(--m)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}.bar>*{flex:1 1 140px}
+.ov{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:6px 8px;border-bottom:1px solid var(--ac);text-align:left;white-space:nowrap}
+th{background:var(--ac);color:var(--m)}
+.x{background:none;border:0;color:#b33;cursor:pointer;font-size:16px}
+.mut{color:#5b6b7d;font-size:12px}
+.in{color:#1a7f4b}.out{color:#b33}
+td input{width:64px;padding:4px}
+.sheet{background:#fff;border:1px solid var(--b);padding:26px;min-height:520px}
+[contenteditable]:focus{outline:2px solid var(--s)}
+@media(min-width:900px){
+nav{top:0;bottom:auto;width:200px;flex-direction:column;padding-top:12px;border-top:0;border-right:1px solid var(--b)}
+nav a{text-align:left;padding:10px 16px;font-size:14px;display:flex;gap:10px;align-items:center}
+nav a span{display:inline;font-size:18px}
+header,main{margin-left:200px}main{max-width:none;padding-bottom:30px}}
+@media print{header,nav,.np{display:none!important}main{margin:0!important;padding:0}.sheet{border:0}}
+</style>
+</head>
+<body>
+<header><b>FKMA Ankazomasina</b><small>Sekretariat Jeneraly · Secrétariat Général</small></header>
+<nav id="nav"></nav>
+<main id="main"></main>
+<script>
+const K='fkma_v1',IN='Vola Niditra',OUT='Vola Nivoaka',FIA='Fiangonana (Caisse Centrale)',BR="Anjara biriky ho an'ny Fiangonana";
+const SMP=['SLK','STK','Dorkasy','Sekoly Alahady','Chorale','Vokovoko Manga','SAZ'];
+const MOIS=['Nov','Des','Jan','Feb','Mar','Apr','Mey','Jon','Jol','Aog','Sep','Okt'];
+const CAT=['Rakitra Alahady','Adidy / Cotisations','Hetsika / Vokatra',BR,'Fampandehanana & Jiro/Rano','Fitaovana / Fampandehanana','Asa sosialy & Fanorenana','Hafa'];
+const T=()=>new Date().toISOString().slice(0,10);
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt=n=>new Intl.NumberFormat('fr-FR').format(+n||0)+' Ar';
+const sum=(a,f)=>a.reduce((t,o)=>t+(+f(o)||0),0);
+const ol=o=>typeof o=='function'?o():o;
+let S,R='db',Q={};
+const def=()=>({fid:[],ops:[],act:[],prog:[],dec:[],cou:[],inv:[],cot:[],initF:0,annuel:12000,sam:SMP.map(n=>({n,init:0})),lettre:{ref:'',date:T(),obj:'',corps:''}});
+function load(){let d;try{d=JSON.parse(localStorage[K])}catch(e){}S=Object.assign(def(),d||{})}
+function save(){try{localStorage[K]=JSON.stringify(S)}catch(e){alert('Tsy afaka mitahiry (stockage plein).')}}
+const ACC=()=>[FIA,...S.sam.map(s=>s.n)];
+const ini=a=>+(a==FIA?S.initF:(S.sam.find(s=>s.n==a)||{}).init)||0;
+const flow=(a,ty)=>sum(S.ops.filter(o=>(a==null||o.cp==a)&&o.ty==ty),o=>o.mt);
+const net=a=>ini(a)+flow(a,IN)-flow(a,OUT);
+
+/* Modules génériques : f=[clé,libellé,type,options] */
+const M={
+fid:{t:'Kristiana (Fidèles)',fl:['sa','mp'],c:['nom','sx','dn','ad','tel','bat','mp','sa','fn'],f:[['nom','Anarana feno'],['sx','Lahy / Vavy','sel',['Lahy','Vavy']],['dn','Daty naterahana','date'],['ad','Fonenana / Quartier'],['tel','Finday'],['bat','Vita Batisa','sel',['Eny','Tsia']],['mp','Mpandray','sel',['Eny','Tsia']],['sa','Sampana','sel',()=>['—',...S.sam.map(s=>s.n)]],['fn','Andraikitra / Diakona']]},
+ops:{t:'Fitantanam-bola (Caisse Centrale)',fl:['cp','ty'],c:['dt','cp','cat','lib','ty','mt','pj'],pre:()=>`<div class=k>${ACC().map(a=>`<div><small>${esc(a)}</small><b>${fmt(net(a))}</b></div>`).join('')}</div>`,
+ sm:r=>`<span class=in>Niditra: ${fmt(sum(r.filter(o=>o.ty==IN),o=>o.mt))}</span> · <span class=out>Nivoaka: ${fmt(sum(r.filter(o=>o.ty==OUT),o=>o.mt))}</span>`,
+ f:[['dt','Daty','date'],['cp','Kaonty / Entité','sel',ACC],['cat','Sokajy','sel',CAT],['lib','Antony / Libellé'],['ty','Karazana','sel',[IN,OUT]],['mt','Vola (Ar)','number'],['pj','N° pièce']]},
+act:{t:'Sakramenta (Actes pastoraux)',fl:['ty'],c:['ty','dt','nm','pa','rf'],f:[['ty','Karazana','sel',['Batisa','Fandraisana','Mariazy','Fandevenana']],['dt','Daty','date'],['nm','Olona voakasik\'izany'],['pa','Mpitandrina'],['rf','Référence']]},
+prog:{t:'Programa (Activités)',fl:['st'],c:['dt','tt','rs','bd','st'],f:[['dt','Daty','date'],['tt','Hetsika'],['rs','Tompon\'andraikitra'],['bd','Tetibola (Ar)','number'],['st','Toe-javatra','sel',['Ho avy','An-dalana','Vita','Nahemotra']]]},
+dec:{t:"Fanapahan-kevitra (Décisions)",fl:['st'],c:['dt','tt','ra','st'],f:[['dt','Daty','date'],['tt','Fanapahan-kevitra'],['ra','Mpanatanteraka'],['st','Fanatanterahana','sel',['An-dalana','Vita','Tsy vita']]]},
+cou:{t:'Taratasy (Courrier)',fl:['sens'],c:['sens','rf','dt','ex','ob'],f:[['sens','Karazana','sel',['Miditra (entrant)','Mivoaka (sortant)']],['rf','Référence'],['dt','Daty','date'],['ex','Mpandefa / Mpandray'],['ob','Lohateny (objet)']]},
+inv:{t:'Fananana (Inventaire)',fl:['et'],c:['nm','qt','et','lk'],f:[['nm','Fitaovana'],['qt','Habetsany','number'],['et','Toe-javatra','sel',['Tsara','Antonony','Simba']],['lk','Toerana fitehirizana']]}
+};
+const lbl=(m,c)=>m.f.find(f=>f[0]==c)[1];
+const fld=([k,l,t,o],i)=>`<label>${l}${t=='sel'?`<select name=${k}>${ol(o).map(x=>`<option>${esc(x)}</option>`).join('')}</select>`:`<input name=${k} type=${t||'text'} ${i?'':'required'} ${t=='number'?'min=0 step=any value=0':''} ${t=='date'?'value='+T():''}>`}</label>`;
+function view(k){const m=M[k],q=Q[k]||(Q[k]={q:'',f:{}});
+return `<h2>${m.t}</h2>${m.pre?m.pre():''}<div class=card><form class=g onsubmit="return add('${k}',this)">${m.f.map(fld).join('')}<button class=btn>＋ Ampio</button></form></div>
+<div class=card><div class=bar><input placeholder="🔍 Hikaroka…" value="${esc(q.q)}" oninput="Q['${k}'].q=this.value;tb('${k}')">${(m.fl||[]).map(a=>{const f=m.f.find(x=>x[0]==a);return `<select onchange="Q['${k}'].f.${a}=this.value;tb('${k}')"><option value="">${f[1]}: rehetra</option>${ol(f[3]).map(x=>`<option${q.f[a]==x?' selected':''}>${esc(x)}</option>`).join('')}</select>`}).join('')}</div><div id=tb class=ov></div></div>`}
+function tb(k){const m=M[k],q=Q[k];
+const r=S[k].filter(o=>(!q.q||Object.values(o).join(' ').toLowerCase().includes(q.q.toLowerCase()))&&Object.entries(q.f).every(([a,b])=>!b||o[a]==b));
+$('#tb').innerHTML=`<table><tr>${m.c.map(c=>`<th>${lbl(m,c)}`).join('')}<th></tr>${r.map(o=>`<tr>${m.c.map(c=>`<td>${c=='mt'||c=='bd'?fmt(o[c]):esc(o[c])}`).join('')}<td><button class=x onclick="del('${k}',${o.id})" aria-label="Hamafa">✕</button>`).join('')||`<tr><td colspan=${m.c.length+1} class=mut>Tsy misy voasoratra. Ampidiro eo ambony.`}</table><p class=mut>${r.length} andalana ${m.sm?'· '+m.sm(r):''}</p>`}
+function add(k,f){const o={id:Date.now()};new FormData(f).forEach((v,n)=>o[n]=v);S[k].unshift(o);save();render();return false}
+function del(k,id){if(confirm('Fafana ve?')){S[k]=S[k].filter(o=>o.id!=id);save();render()}}
+
+/* Vues spécifiques */
+const V={
+db:()=>{const up=S.prog.filter(p=>['Ho avy','An-dalana'].includes(p.st)).sort((a,b)=>a.dt>b.dt?1:-1).slice(0,5);
+return `<h2>Tableau de Bord</h2><div class=k>${[['Kristiana voasoratra',S.fid.length],["Mpandray ny Fanasan'ny Tompo",S.fid.filter(f=>f.mp=='Eny').length],['Vola niditra',fmt(flow(null,IN))],['Vola nivoaka',fmt(flow(null,OUT))],['Solde global en caisse',fmt(sum(ACC(),net))]].map(([a,b])=>`<div><small>${a}</small><b>${b}</b></div>`).join('')}</div>
+<div class=card><h3>Solde isaky ny kaonty</h3><table>${ACC().map(a=>`<tr><td>${esc(a)}<td><b class="${net(a)<0?'out':''}">${fmt(net(a))}</b>`).join('')}</table></div>
+<div class=card><h3>Hetsika ho avy</h3>${up.length?up.map(p=>`<p style="margin:4px 0"><b>${esc(p.dt)}</b> — ${esc(p.tt)} <span class=mut>(${esc(p.rs)} · ${esc(p.st)})</span></p>`).join(''):'<p class=mut>Tsy misy hetsika voalahatra. Ampio ao amin\'ny Programa.</p>'}</div>`},
+sm:()=>`<h2>Fidirambolan'ny Sampana</h2><div class=card><div class=ov><table><tr><th>Sampana<th>Solde voalohany<th>Niditra<th>Nivoaka<th>Solde ankehitriny<th>Anjara biriky</tr>${ACC().map((a,i)=>`<tr><td>${esc(a)}<td><input type=number value=${ini(a)} onchange="setIni(${i},this.value)"><td class=in>${fmt(flow(a,IN))}<td class=out>${fmt(flow(a,OUT))}<td><b>${fmt(net(a))}</b><td>${fmt(sum(S.ops.filter(o=>o.cp==a&&o.cat==BR),o=>o.mt))}`).join('')}</table></div></div>
+<div class=card><form class=g onsubmit="return addS(this)"><label>Sampana vaovao<input name=n required></label><button class=btn>＋ Ampio</button></form></div>`,
+ct:()=>`<h2>Cotisation Mpandray</h2><div class=card><div class=g><label>Vola isan-taona (Ar)<input type=number value=${S.annuel} onchange="S.annuel=+this.value;save();render()"></label><form class=g onsubmit="return addC(this)"><label>N° carte<input name=c required></label><label>Anarana feno<input name=n required></label><button class=btn>＋ Ampio</button></form></div><p><button class="btn l" onclick=imp()>Hanafatra ny Mpandray avy amin'ny Kristiana</button></p></div>
+<div class=card><div class=ov><table><tr><th>N°<th>Anarana${MOIS.map(m=>`<th>${m}`).join('')}<th>Total<th>Reste<th></tr>${S.cot.map((c,i)=>{const t=sum(c.p,x=>x);return `<tr><td>${esc(c.c)}<td>${esc(c.n)}${c.p.map((v,j)=>`<td><input type=number min=0 value="${v||''}" onchange="S.cot[${i}].p[${j}]=+this.value;save();render()">`).join('')}<td><b>${fmt(t)}</b><td class="${t>=S.annuel?'in':'out'}">${fmt(Math.max(0,S.annuel-t))}<td><button class=x onclick="delC(${i})">✕</button>`}).join('')||`<tr><td colspan=17 class=mut>Tsy mbola misy Mpandray.`}</table></div><p class=mut>Volana: Novambra → Oktobra</p></div>`,
+lt:()=>{const L=S.lettre,e=k=>`contenteditable oninput="S.lettre.${k}=this.innerText;save()"`;
+return `<div class="np card"><button class=btn onclick=print()>🖨️ Hanonta (imprimer)</button> <span class=mut>Tsindrio ny soratra eo ambany mba hanova azy.</span></div>
+<div class=sheet><div style="text-align:center;border-bottom:3px double #1E3A5F;padding-bottom:10px"><h2 style="margin:0">FKMA Ankazomasina</h2><b>Sekretariat Jeneraly — Secrétariat Général</b><div>Antananarivo</div></div>
+<p>Laharana / Réf : <b ${e('ref')}>${esc(L.ref)||'N°…/…/SG'}</b><span style="float:right">Daty : <b ${e('date')}>${esc(L.date)}</b></span></p>
+<p>Lohateny / Objet : <b ${e('obj')}>${esc(L.obj)||'……………'}</b></p>
+<div ${e('corps')} style="min-height:280px;white-space:pre-wrap">${esc(L.corps)||'Soraty eto ny votoatin-taratasy…'}</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;margin-top:30px"><div>Ny Mpitahiry Vola<br><br><br>……………</div><div>Ny Sekretera Jeneraly<br><br><br>……………</div><div>Ny Mpitandrina / Filoha<br><br><br>……………</div></div></div>`},
+sv:()=>`<h2>Sauvegarde & Export</h2><div class="card g"><button class=btn onclick="dl('fkma_sauvegarde.json',JSON.stringify(S,null,1),'application/json')">⬇️ Export JSON</button><label class="btn l">⬆️ Import JSON<input type=file accept=".json" hidden onchange=imj(this)></label><button class=btn onclick=csv()>📄 Export CSV (Excel)</button><button class="btn l" onclick=demo()>🧪 Données de démonstration</button><button class="btn l" onclick=rst()>🗑️ Réinitialiser</button></div><p class=mut>Ny angona dia voatahiry ao amin'ny finday (localStorage), mandeha tsy needs internet. Ataovy tsindraindray ny export JSON ho fiarovana.</p>`
+};
+function setIni(i,v){if(i==0)S.initF=+v;else S.sam[i-1].init=+v;save();render()}
+function addS(f){S.sam.push({n:f.n.value.trim(),init:0});save();render();return false}
+function addC(f){S.cot.push({id:Date.now(),c:f.c.value,n:f.n.value,p:Array(12).fill(0)});save();render();return false}
+function delC(i){if(confirm('Fafana ve?')){S.cot.splice(i,1);save();render()}}
+function imp(){S.fid.filter(f=>f.mp=='Eny'&&!S.cot.some(c=>c.n==f.nom)).forEach(f=>S.cot.push({id:Date.now()+S.cot.length,c:'M-'+String(S.cot.length+1).padStart(3,'0'),n:f.nom,p:Array(12).fill(0)}));save();render()}
+
+/* Sauvegarde / export */
+async function dl(n,t,m){const P=window.Capacitor&&window.Capacitor.Plugins;
+if(P&&P.Filesystem&&P.Share){try{const r=await P.Filesystem.writeFile({path:n,data:t,directory:'CACHE',encoding:'utf8'});await P.Share.share({title:n,url:r.uri});return}catch(e){}}
+const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:m}));a.download=n;a.click()}
+function imj(i){const r=new FileReader();r.onload=()=>{try{S=Object.assign(def(),JSON.parse(r.result));save();go('db');alert('Averina ny angona.')}catch(e){alert('Fichier JSON tsy mety.')}};r.readAsText(i.files[0])}
+function csv(){const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';let o='';
+for(const k in M)o+=`\n${M[k].t}\n`+M[k].f.map(f=>q(f[1])).join(';')+'\n'+S[k].map(r=>M[k].f.map(f=>q(r[f[0]])).join(';')).join('\n')+'\n';
+o+='\nCotisation Mpandray\n'+['N°','Anarana',...MOIS,'Total','Reste'].map(q).join(';')+'\n'+S.cot.map(c=>{const t=sum(c.p,x=>x);return [c.c,c.n,...c.p,t,S.annuel-t].map(q).join(';')}).join('\n');
+o+='\n\nSolde isaky ny kaonty\n'+ACC().map(a=>[a,net(a)].map(q).join(';')).join('\n');
+dl('fkma_export.csv','\ufeff'+o,'text/csv')}
+function rst(){if(confirm('Hofafana ny angona rehetra?')){S=def();save();go('db')}}
+function demo(){if(!confirm('Hosolo angona fanandramana ny angona ankehitriny?'))return;S=def();
+const n=['Rakoto Jean','Rasoa Marie','Randria Paul','Razafy Lala','Rabe Hery','Ravao Soa'];
+S.fid=n.map((x,i)=>({id:i+1,nom:x,sx:i%2?'Vavy':'Lahy',dn:`19${60+i*5}-05-12`,ad:'Ankazomasina',tel:'034 00 000 0'+i,bat:'Eny',mp:i<4?'Eny':'Tsia',sa:SMP[i],fn:i?'':'Diakona'}));
+S.cot=n.slice(0,4).map((x,i)=>({id:i+1,c:'M-00'+(i+1),n:x,p:MOIS.map((_,j)=>j<3+i*2?1000:0)}));
+const o=(d,cp,cat,lib,ty,mt,pj)=>({id:Math.random(),dt:d,cp,cat,lib,ty,mt,pj});
+S.ops=[o('2026-11-01',FIA,CAT[0],'Rakitra Alahady',IN,250000,'R-01'),o('2026-11-03','SLK',CAT[1],'Adidy SLK',IN,120000,'R-02'),o('2026-11-08','Dorkasy',CAT[2],'Varotra Dorkasy',IN,180000,'R-03'),o('2026-11-10','SLK',BR,'Anjara biriky SLK',OUT,40000,'D-01'),o('2026-11-12',FIA,CAT[4],'Jiro sy Rano',OUT,85000,'D-02'),o('2026-11-15','Chorale',CAT[5],'Fividianana partition',OUT,30000,'D-03')];
+S.prog=[{id:1,dt:'2026-12-25',tt:'Fetin\'ny Noely',rs:'Komity',bd:500000,st:'Ho avy'},{id:2,dt:'2026-12-06',tt:'Fampiofanana Sekoly Alahady',rs:'Sekoly Alahady',bd:80000,st:'An-dalana'},{id:3,dt:'2026-10-18',tt:'Fitsidihana marary',rs:'Dorkasy',bd:50000,st:'Vita'}];
+S.dec=[{id:1,dt:'2026-11-05',tt:'Fanamboarana ny tafo',ra:'Birao',st:'An-dalana'}];
+S.cou=[{id:1,sens:'Miditra (entrant)',rf:'E-014',dt:'2026-11-09',ex:'FKMA Synod',ob:'Fiangonana isam-paritra'},{id:2,sens:'Mivoaka (sortant)',rf:'S-007',dt:'2026-11-11',ex:'Faritra',ob:'Tatitra isam-bolana'}];
+S.inv=[{id:1,nm:'Seza plastika',qt:120,et:'Tsara',lk:'Trano fitehirizana'},{id:2,nm:'Haut-parleur',qt:4,et:'Antonony',lk:'Birao'}];
+S.act=[{id:1,ty:'Batisa',dt:'2026-10-04',nm:'Ravelo Aina',pa:'Pasitera',rf:'B-021'},{id:2,ty:'Mariazy',dt:'2026-10-24',nm:'Rado & Voahangy',pa:'Pasitera',rf:'M-005'}];
+save();go('db')}
+
+/* Navigation */
+const NAV=[['db','📊','Tableau'],['ops','💰','Vola'],['sm','🏛️','Sampana'],['ct','🧾','Cotisation'],['fid','👥','Kristiana'],['act','✝️','Sakramenta'],['prog','📅','Programa'],['dec','⚖️','Fanapahana'],['cou','✉️','Taratasy'],['inv','📦','Fananana'],['lt','🖨️','Entête'],['sv','💾','Sauvegarde']];
+function render(){$('#nav').innerHTML=NAV.map(([k,i,l])=>`<a class="${k==R?'on':''}" onclick="go('${k}')"><span>${i}</span>${l}</a>`).join('');
+$('#main').innerHTML=(V[R]||(()=>view(R)))();if(M[R])tb(R)}
+function go(r){R=r;render();scrollTo(0,0)}
+load();render();
+if("serviceWorker" in navigator&&/^https?:$/.test(location.protocol))navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script>
+</body>
+</html>
